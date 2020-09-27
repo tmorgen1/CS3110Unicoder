@@ -53,23 +53,63 @@ public class Codepoint {
 		}
 	}
 	
+	/**
+	 * Encodes codepoint to UTF32 bytes.
+	 *
+	 * @precondition none
+	 * @postcondition none
+	 *
+	 * @return the encoded bytes
+	 */
+	public String toUTF32() {
+		String encodedBytes = "";
+		
+		encodedBytes = String.format("%8s", Integer.toHexString(this.codepointHex)).replace(' ', '0');
+		
+		return encodedBytes;
+	}
+	
+	/**
+	 * Encodes codepoint to UTF16 bytes.
+	 *
+	 * @precondition none
+	 * @postcondition none
+	 *
+	 * @return the encoded bytes
+	 */
 	public String toUTF16() {
 		String encodedBytes = "";
 		
-		if (this.codepointHex <= TWO_BYTE_UTF16_FIRST_THRESHOLD_MAX || (this.codepointHex >= TWO_BYTE_UTF16_SECOND_THRESHOLD_MIN && this.codepointHex <= TWO_BYTE_UTF16_SECOND_THRESHOLD_MAX)) {
-			encodedBytes = Integer.toString(this.codepointHex, HEX_RADIX);
-			encodedBytes = String.format("%4s", encodedBytes).replace(' ', '0');
-		} else if (this.codepointHex > TWO_BYTE_UTF16_SECOND_THRESHOLD_MAX) {
-			int value = this.codepointHex - 0x10000;
-			String upperBits = String.format("%20s", Integer.toBinaryString(value)).replace(' ', '0');
-			upperBits = upperBits.substring(0, 10);
-			String lowerBits = String.format("%20s", Integer.toBinaryString(value)).replace(' ', '0');
-			lowerBits = lowerBits.substring(10);
-			int highSurrogate = 0xD800 + Integer.parseInt(upperBits, BINARY_RADIX);
-			int lowSurrogate = 0xDC00 + Integer.parseInt(lowerBits, BINARY_RADIX);
-			encodedBytes = Integer.toString(highSurrogate, HEX_RADIX) + Integer.toString(lowSurrogate, HEX_RADIX);
+		if (this.codepointHex <= TWO_BYTE_UTF16_FIRST_THRESHOLD_MAX) {
+			encodedBytes = this.encodeUTF162Byte();
+		} else if (this.codepointHex < TWO_BYTE_UTF16_SECOND_THRESHOLD_MIN) {
+			return encodedBytes;
+		} else if (this.codepointHex <= TWO_BYTE_UTF16_SECOND_THRESHOLD_MAX) {
+			encodedBytes = this.encodeUTF162Byte();
+		} else {
+			encodedBytes = this.encodeUTF164Byte();
 		}
 		
+		return encodedBytes;
+	}
+
+	private String encodeUTF164Byte() {
+		String encodedBytes;
+		int value = this.codepointHex - 0x10000;
+		String upperBits = String.format("%20s", Integer.toBinaryString(value)).replace(' ', '0');
+		upperBits = upperBits.substring(0, 10);
+		String lowerBits = String.format("%20s", Integer.toBinaryString(value)).replace(' ', '0');
+		lowerBits = lowerBits.substring(10);
+		int highSurrogate = 0xD800 + Integer.parseInt(upperBits, BINARY_RADIX);
+		int lowSurrogate = 0xDC00 + Integer.parseInt(lowerBits, BINARY_RADIX);
+		encodedBytes = Integer.toString(highSurrogate, HEX_RADIX) + Integer.toString(lowSurrogate, HEX_RADIX);
+		return encodedBytes;
+	}
+
+	private String encodeUTF162Byte() {
+		String encodedBytes;
+		encodedBytes = Integer.toString(this.codepointHex, HEX_RADIX);
+		encodedBytes = String.format("%4s", encodedBytes).replace(' ', '0');
 		return encodedBytes;
 	}
 	
