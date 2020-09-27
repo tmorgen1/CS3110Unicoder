@@ -9,12 +9,17 @@ package edu.westga.cs3110.unicoder.model;
 public class Codepoint {
 	
 	private static final String TEN = "10";
+	
 	public static final int CODEPOINT_MIN = 0;
 	public static final int CODEPOINT_MAX = 0x10FFFF;
 	
 	public static final int SINGLE_BYTE_UTF8_THRESHOLD = 0x7F;
 	public static final int TWO_BYTE_UTF8_THRESHOLD = 0x7FF;
 	public static final int THREE_BYTE_UTF8_THRESHOLD = 0xFFFF;
+	
+	public static final int TWO_BYTE_UTF16_FIRST_THRESHOLD_MAX = 0xD7FF;
+	public static final int TWO_BYTE_UTF16_SECOND_THRESHOLD_MIN = 0xE000;
+	public static final int TWO_BYTE_UTF16_SECOND_THRESHOLD_MAX = 0xFFFF;
 	
 	public static final int HEX_RADIX = 16;
 	public static final int BINARY_RADIX = 2;
@@ -48,6 +53,34 @@ public class Codepoint {
 		}
 	}
 	
+	public String toUTF16() {
+		String encodedBytes = "";
+		
+		if (this.codepointHex <= TWO_BYTE_UTF16_FIRST_THRESHOLD_MAX || (this.codepointHex >= TWO_BYTE_UTF16_SECOND_THRESHOLD_MIN && this.codepointHex <= TWO_BYTE_UTF16_SECOND_THRESHOLD_MAX)) {
+			encodedBytes = Integer.toString(this.codepointHex, HEX_RADIX);
+			encodedBytes = String.format("%4s", encodedBytes).replace(' ', '0');
+		} else if (this.codepointHex > TWO_BYTE_UTF16_SECOND_THRESHOLD_MAX) {
+			int value = this.codepointHex - 0x10000;
+			String upperBits = String.format("%20s", Integer.toBinaryString(value)).replace(' ', '0');
+			upperBits = upperBits.substring(0, 10);
+			String lowerBits = String.format("%20s", Integer.toBinaryString(value)).replace(' ', '0');
+			lowerBits = lowerBits.substring(10);
+			int highSurrogate = 0xD800 + Integer.parseInt(upperBits, BINARY_RADIX);
+			int lowSurrogate = 0xDC00 + Integer.parseInt(lowerBits, BINARY_RADIX);
+			encodedBytes = Integer.toString(highSurrogate, HEX_RADIX) + Integer.toString(lowSurrogate, HEX_RADIX);
+		}
+		
+		return encodedBytes;
+	}
+	
+	/**
+	 * Encodes codepoint to UTF8 bytes.
+	 * 
+	 * @precondition none
+	 * @postcondition none
+	 *
+	 * @return the encoded bytes
+	 */
 	public String toUTF8() {
 		String encodedBytes = "";
 		
